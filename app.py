@@ -214,6 +214,7 @@ st.markdown(
         <p>How location, room type, and listing behavior shaped New York City's short-term rental market in 2019.</p>
         <div class="badge-bar">
             <span class="editorial-badge">Ankush Thakur · GU-2024-3416</span>
+            <span class="editorial-badge">Chetan Sharma · GU-2024-3438</span>
             <span class="editorial-badge">48K+ listings · 5 boroughs</span>
             <a class="editorial-badge-blue" href="https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data" target="_blank">Kaggle source</a>
             <span class="editorial-badge">Descriptive, not causal</span>

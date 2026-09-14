@@ -7,7 +7,7 @@
 - **College Roll No. / Student ID:** GU-2024-3416
 - **Department / Branch:** Computer Science & Engineering
 - **Year of Study:** 3rd Year (Junior)
-- **Team Members:** Ankush Thakur
+- **Team Members:** Ankush Thakur (GU-2024-3416), Chetan Sharma (GU-2024-3438)
 
 ## 2. Dataset and Methodology Track
 

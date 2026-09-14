@@ -21,12 +21,24 @@ Do not select Superstore. This repository analyzes the NYC Airbnb dataset.
 ## 3. Files to Submit
 
 - **Primary Visualization Image:** `submission/nyc_airbnb_market_intelligence.png`
+- **Answer to Question 1:** `submission/question_1_price_by_neighborhood_room_type.png`
+- **Answer to Question 2:** `submission/question_2_geospatial_review_clusters.png`
+- **Answer to Question 3:** `submission/question_3_minimum_nights_vs_availability.png`
 - **Python Visualization Script:** `submission_visualization.py`
+- **Question Visualization Script:** `question_visualizations.py`
 - **Interactive Dashboard Script:** `app.py`
 - **Full project archive:** upload a ZIP of the repository if the portal permits it
 - **GitHub / Live Link:** add the deployed Streamlit URL or public GitHub repository URL before submission
 
 The primary image is a 16:9, high-resolution artifact created with both Matplotlib and Seaborn. The interactive dashboard uses Plotly.
+
+### Required Question Uploads
+
+Upload the three files in this exact order:
+
+1. **Upload Answer to Question 1:** `question_1_price_by_neighborhood_room_type.png`
+2. **Upload Answer to Question 2:** `question_2_geospatial_review_clusters.png`
+3. **Upload Answer to Question 3:** `question_3_minimum_nights_vs_availability.png`
 
 ## 4. Key Data Insights Discovered
 

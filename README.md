@@ -50,7 +50,9 @@ Open your browser at `http://localhost:8501`.
 ## Panel Submission Package
 
 - Primary 2400x1350 visualization: [`submission/nyc_airbnb_market_intelligence.png`](submission/nyc_airbnb_market_intelligence.png)
+- Three form-ready question images: [`submission/`](submission/)
 - Reproducible Matplotlib + Seaborn generator: [`submission_visualization.py`](submission_visualization.py)
+- Reproducible question-image generator: [`question_visualizations.py`](question_visualizations.py)
 - Form-ready participant details, insights, methodology, and checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)
 
 Regenerate the judging image with:

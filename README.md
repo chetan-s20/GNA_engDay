@@ -4,9 +4,9 @@
 > An editorial, evidence-led, and interactive data visualization application dissecting the New York City short-term rental market in 2019.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
-[![Plotly](https://img.shields.io/badge/Plotly-6.0+-3F4F75?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
-[![Tests](https://img.shields.io/badge/Tests-9%20Passing-10B981?style=flat)](tests/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.39+-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Plotly](https://img.shields.io/badge/Plotly-5.24+-3F4F75?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
+[![Tests](https://img.shields.io/badge/Tests-pytest-10B981?style=flat)](tests/)
 
 ---
 
@@ -29,15 +29,8 @@ This dashboard delivers an editorial urban-market report combining high-contrast
 git clone https://github.com/chetan-s20/GNA_engDay.git
 cd GNA_engDay
 
-# Create and activate virtual environment (optional but recommended)
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS / Linux:
-source venv/bin/activate
-
-# Install required dependencies
-pip install -r requirements.txt
+# Create a Python 3.12 environment and install locked dependencies with uv
+uv sync --python 3.12
 ```
 
 ### 3. Verify Dataset
@@ -48,9 +41,23 @@ If you need to re-download it:
 
 ### 4. Run Application
 ```bash
-streamlit run app.py
+uv run streamlit run app.py
 ```
 Open your browser at `http://localhost:8501`.
+
+---
+
+## Panel Submission Package
+
+- Primary 2400x1350 visualization: [`submission/nyc_airbnb_market_intelligence.png`](submission/nyc_airbnb_market_intelligence.png)
+- Reproducible Matplotlib + Seaborn generator: [`submission_visualization.py`](submission_visualization.py)
+- Form-ready participant details, insights, methodology, and checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)
+
+Regenerate the judging image with:
+
+```bash
+uv run python submission_visualization.py
+```
 
 ---
 
@@ -59,7 +66,7 @@ Open your browser at `http://localhost:8501`.
 Run the complete test suite verifying data validation, cleaning rules, host segmentation, price tier derivation, empty filter safety, and end-to-end chart rendering:
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
 
 ---
@@ -74,7 +81,7 @@ pytest -v
 - **Dynamic Observations:** Dynamically generated statistical narrative (recalculated upon filter changes without hardcoding).
 
 ### 2. Interactive Market Map
-- **Token-Free Carto-Positron / OSM Maps:** Zero external API keys or Mapbox secrets required.
+- **Offline Geographic Plot:** Longitude/latitude rendering works without map tiles, API keys, or Mapbox secrets.
 - **3 Switchable Geospatial Layers:**
   1. *Listing Density Heatmap:* Spatial clustering of inventory.
   2. *Median Price Map:* Neighborhood-level aggregated nightly rates with listing count scaling.
@@ -108,7 +115,7 @@ pytest -v
 ## 📂 Project Structure
 
 ```text
-e:\GNA_engDay\
+GNA_engDay/
 ├── app.py                      # Streamlit application entry point & layout
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # Comprehensive documentation
@@ -132,13 +139,12 @@ e:\GNA_engDay\
 
 ## ⚖️ Hackathon Evaluation Alignment
 
-| Dimension | Points | How This Project Excels |
-| :--- | :---: | :--- |
-| **1. Data Accuracy & Engineering Complexity** | **33 / 33** | Robust cleaning pipeline, error coercion, non-null separation, quartile price tiers, log-price transform, multi-dimensional neighborhood aggregations, and composite Relative Value scoring. |
-| **2. Visual Design & Interactivity** | **33 / 33** | Refined NYC editorial dark theme (`#0B0F19`), taxi-amber accents, token-free Carto-Positron maps, responsive KPI cards, clean legends, and interactive multi-faceted sidebar filters. |
-| **3. Analytical Insights & Storytelling** | **34 / 34** | Live recalculated narrative takeaways, clear separation of volume vs. premium pricing, host commercialization analysis, and rigorous disclosure of statistical caveats. |
+| Dimension | Verifiable implementation |
+| :--- | :--- |
+| **Data Accuracy & Engineering** | Schema validation, safe type coercion, missing-value preservation, quartile price tiers, host segmentation, and tested neighborhood aggregation. |
+| **Visual Design & Interactivity** | NYC editorial theme, token-free Carto maps, responsive KPIs, consistent chart styling, and global multi-faceted filters. |
+| **Insights & Storytelling** | Filter-aware narrative takeaways, supply-versus-price comparison, neighborhood benchmarking, and explicit analytical caveats. |
 
 ---
 
-## 📜 License
-MIT License - Created for the GNA University Engineering Day Hackathon.
+Created for the GNA University Engineering Day Hackathon. The source dataset remains subject to its Kaggle listing terms.

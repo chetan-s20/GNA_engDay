@@ -8,7 +8,6 @@ Adheres strictly to PRD guidelines:
 """
 
 import pandas as pd
-import numpy as np
 
 
 def generate_overview_insights(df: pd.DataFrame) -> list[str]:
@@ -26,7 +25,7 @@ def generate_overview_insights(df: pd.DataFrame) -> list[str]:
         top_count = borough_counts.iloc[0]
         top_share = (top_count / total_count) * 100
         insights.append(
-            f"**{top_borough}** maintains the largest share of filtered listings, "
+            f"**{top_borough}** has the largest share of filtered listings, "
             f"accounting for **{top_share:.1f}%** of market supply ({top_count:,} listings)."
         )
 
@@ -59,30 +58,34 @@ def generate_price_insights(df: pd.DataFrame, price_cap: float = 1000.0) -> list
 
     insights = []
     capped_df = df[df["price"] <= price_cap]
+    if capped_df.empty:
+        return [
+            f"No listings fall within the current ${price_cap:,.0f} chart display cap."
+        ]
 
     # Check room type price differences
-    room_medians = df.groupby("room_type")["price"].median()
+    room_medians = capped_df.groupby("room_type")["price"].median()
     if "Entire home/apt" in room_medians and "Private room" in room_medians:
         home_med = room_medians["Entire home/apt"]
         priv_med = room_medians["Private room"]
         diff_pct = ((home_med - priv_med) / priv_med) * 100 if priv_med > 0 else 0
         insights.append(
-            f"Entire home/apt listings command a **{diff_pct:.0f}% median premium** "
+            f"Entire home/apt listings show a **{diff_pct:.0f}% median premium** "
             f"(${home_med:,.0f} vs. ${priv_med:,.0f}) over private rooms."
         )
 
     # Check minimum nights correlation / median
-    short_stay = df[df["minimum_nights"] <= 3]["price"].median()
-    long_stay = df[df["minimum_nights"] >= 30]["price"].median()
-    if not pd.isna(short_stay) and not pd.isna(long_stay) and len(df[df["minimum_nights"] >= 30]) >= 10:
+    short_stay = capped_df[capped_df["minimum_nights"] <= 3]["price"].median()
+    long_stay = capped_df[capped_df["minimum_nights"] >= 30]["price"].median()
+    if not pd.isna(short_stay) and not pd.isna(long_stay) and len(capped_df[capped_df["minimum_nights"] >= 30]) >= 10:
         insights.append(
             f"Short-stay listings (<= 3 nights) show a median of **${short_stay:,.0f}**, "
             f"while extended-stay listings (>= 30 nights) show a median of **${long_stay:,.0f}**."
         )
 
     # Price tier breakdown
-    if "price_tier" in df.columns:
-        tier_counts = df["price_tier"].value_counts(normalize=True) * 100
+    if "price_tier" in capped_df.columns:
+        tier_counts = capped_df["price_tier"].value_counts(normalize=True) * 100
         lux_share = tier_counts.get("Luxury", 0.0)
         bud_share = tier_counts.get("Budget", 0.0)
         insights.append(
@@ -113,7 +116,7 @@ def generate_demand_insights(df: pd.DataFrame) -> list[str]:
     zero_avail = (df["availability_365"] == 0).mean() * 100
     insights.append(
         f"**{zero_avail:.1f}%** of listings show 0 calendar availability for the year, "
-        "often indicating inactive listings, fully booked calendars, or unlisted dates."
+        "which can reflect inactive, booked, or withheld dates; this dataset cannot distinguish them."
     )
 
     return insights

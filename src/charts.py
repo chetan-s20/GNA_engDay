@@ -1,7 +1,6 @@
 """Plotly chart builders implementing the visual specifications from prd.md."""
 
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from src.styles import (
@@ -141,146 +140,95 @@ def build_market_map(
     metric: str = "Listing Density",
     price_cap: float = 1000.0,
 ) -> go.Figure:
-    """Interactive map using token-free Carto-Positron / OpenStreetMap tiles.
+    """Interactive offline geographic view using longitude and latitude.
 
     Supported modes:
-    - 'Listing Density': Density heatmap of listings
+    - 'Listing Density': Neighborhood supply bubbles
     - 'Median Price': Aggregated neighborhood median prices
     - 'Review Activity': Aggregated neighborhood median monthly reviews
     """
     if df.empty:
         return empty_figure("No geographic coordinates match the current filters.")
 
-    center_lat, center_lon = 40.728, -73.945
+    map_df = df if metric != "Median Price" else df[df["price"] <= price_cap]
+    neighborhood_summary = (
+        map_df.groupby(["neighbourhood_group", "neighbourhood"])
+        .agg(
+            listings=("id", "count"),
+            median_price=("price", "median"),
+            median_reviews=("reviews_per_month_filled", "median"),
+            lat=("latitude", "mean"),
+            lon=("longitude", "mean"),
+        )
+        .reset_index()
+    )
+    if neighborhood_summary.empty:
+        return empty_figure("No listings fall within the selected map display range.")
+
+    common_hover = {
+        "lat": False,
+        "lon": False,
+        "neighbourhood_group": True,
+        "listings": ":,",
+        "median_price": ":$.0f",
+        "median_reviews": ":.2f",
+    }
+    common_labels = {
+        "neighbourhood_group": "Borough",
+        "listings": "Listings",
+        "median_price": "Median price",
+        "median_reviews": "Median reviews/mo",
+    }
 
     if metric == "Listing Density":
-        # Sample for ultra-smooth rendering if over 12,000 points
-        sample_df = df.sample(n=min(12000, len(df)), random_state=42) if len(df) > 12000 else df
-        if hasattr(px, "density_map"):
-            fig = px.density_map(
-                sample_df,
-                lat="latitude",
-                lon="longitude",
-                radius=9,
-                zoom=9.7,
-                center=dict(lat=center_lat, lon=center_lon),
-                map_style="carto-positron",
-                color_continuous_scale="Viridis",
-            )
-        else:
-            fig = px.density_mapbox(
-                sample_df,
-                lat="latitude",
-                lon="longitude",
-                radius=9,
-                zoom=9.7,
-                center=dict(lat=center_lat, lon=center_lon),
-                mapbox_style="carto-positron",
-                color_continuous_scale="Viridis",
-            )
-        fig.update_layout(
-            title="NYC Listing Density Heatmap (Geographic Supply Concentration)",
-            coloraxis_colorbar=dict(title="Density Index"),
-            height=540,
-        )
+        color_field = "listings"
+        color_scale = "Cividis"
+        title = "Where NYC Airbnb supply concentrates"
+        colorbar_title = "Listings"
     elif metric == "Median Price":
-        # Aggregate by neighborhood for clean, informative, non-cluttered map
-        neigh_agg = (
-            df[df["price"] <= price_cap]
-            .groupby(["neighbourhood_group", "neighbourhood"])
-            .agg(
-                median_price=("price", "median"),
-                listings=("id", "count"),
-                reviews=("number_of_reviews", "sum"),
-                lat=("latitude", "mean"),
-                lon=("longitude", "mean"),
-            )
-            .reset_index()
-        )
-        if neigh_agg.empty:
-            return empty_figure("No data under current price cap for mapping.")
+        color_field = "median_price"
+        color_scale = "Inferno"
+        title = f"Neighborhood price landscape (display cap ${price_cap:,.0f})"
+        colorbar_title = "Median $"
+    else:
+        color_field = "median_reviews"
+        color_scale = "Tealgrn"
+        title = "Neighborhood review activity"
+        colorbar_title = "Reviews/Mo"
 
-        map_kwargs = dict(
-            lat="lat",
-            lon="lon",
-            size="listings",
-            color="median_price",
-            color_continuous_scale="Plasma",
-            size_max=22,
-            zoom=9.7,
-            center=dict(lat=center_lat, lon=center_lon),
-            hover_name="neighbourhood",
-            hover_data={
-                "lat": False,
-                "lon": False,
-                "neighbourhood_group": True,
-                "median_price": ":$.0f",
-                "listings": ":,",
-                "reviews": ":,",
-            },
-            labels={
-                "neighbourhood_group": "Borough",
-                "median_price": "Median Price ($)",
-                "listings": "Listings",
-                "reviews": "Total Reviews",
-            },
-        )
-        if hasattr(px, "scatter_map"):
-            fig = px.scatter_map(neigh_agg, map_style="carto-positron", **map_kwargs)
-        else:
-            fig = px.scatter_mapbox(neigh_agg, mapbox_style="carto-positron", **map_kwargs)
-
-        fig.update_layout(
-            title=f"Neighborhood Median Nightly Price (Capped at ${price_cap:,.0f})",
-            coloraxis_colorbar=dict(title="Median Price ($)"),
-            height=540,
-        )
-    else:  # Review Activity
-        neigh_agg = (
-            df.groupby(["neighbourhood_group", "neighbourhood"])
-            .agg(
-                median_reviews=("reviews_per_month_filled", "median"),
-                listings=("id", "count"),
-                lat=("latitude", "mean"),
-                lon=("longitude", "mean"),
-            )
-            .reset_index()
-        )
-        map_kwargs = dict(
-            lat="lat",
-            lon="lon",
-            size="listings",
-            color="median_reviews",
-            color_continuous_scale="Turbo",
-            size_max=22,
-            zoom=9.7,
-            center=dict(lat=center_lat, lon=center_lon),
-            hover_name="neighbourhood",
-            hover_data={
-                "lat": False,
-                "lon": False,
-                "neighbourhood_group": True,
-                "median_reviews": ":.2f",
-                "listings": ":,",
-            },
-            labels={
-                "neighbourhood_group": "Borough",
-                "median_reviews": "Median Reviews/Mo",
-                "listings": "Listings",
-            },
-        )
-        if hasattr(px, "scatter_map"):
-            fig = px.scatter_map(neigh_agg, map_style="carto-positron", **map_kwargs)
-        else:
-            fig = px.scatter_mapbox(neigh_agg, mapbox_style="carto-positron", **map_kwargs)
-
-        fig.update_layout(
-            title="Geographic Review Activity (Proxy for Monthly Demand Velocity)",
-            coloraxis_colorbar=dict(title="Reviews/Mo"),
-            height=540,
-        )
-
-    fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
+    fig = px.scatter(
+        neighborhood_summary,
+        x="lon",
+        y="lat",
+        size="listings",
+        color=color_field,
+        color_continuous_scale=color_scale,
+        size_max=32,
+        hover_name="neighbourhood",
+        hover_data=common_hover,
+        labels=common_labels,
+    )
+    fig.update_traces(
+        marker=dict(line=dict(width=0.7, color="rgba(243, 240, 232, 0.55)")),
+        selector=dict(mode="markers"),
+    )
+    fig.update_layout(
+        title=title,
+        coloraxis_colorbar=dict(title=colorbar_title),
+        height=620,
+        margin=dict(l=0, r=20, t=50, b=10),
+    )
+    fig.update_xaxes(
+        visible=False,
+        range=[-74.28, -73.68],
+        constrain="domain",
+    )
+    fig.update_yaxes(
+        visible=False,
+        range=[40.48, 40.93],
+        scaleanchor="x",
+        scaleratio=1.18,
+    )
     return apply_plotly_theme(fig)
 
 
@@ -341,6 +289,8 @@ def build_price_by_borough_room_chart(df: pd.DataFrame, price_cap: float = 1000.
         return empty_figure()
 
     capped_df = df[df["price"] <= price_cap]
+    if capped_df.empty:
+        return empty_figure("No listings fall within the selected price display cap.")
     grouped = (
         capped_df.groupby(["neighbourhood_group", "room_type"])["price"]
         .median()
@@ -375,6 +325,8 @@ def build_min_nights_vs_price_chart(df: pd.DataFrame, price_cap: float = 1000.0)
         return empty_figure()
 
     filtered = df[(df["price"] <= price_cap) & (df["minimum_nights"] <= 60)]
+    if filtered.empty:
+        return empty_figure("No listings fall within the selected price and minimum-night display limits.")
     if len(filtered) > 5000:
         filtered = filtered.sample(5000, random_state=42)
 
@@ -395,7 +347,7 @@ def build_min_nights_vs_price_chart(df: pd.DataFrame, price_cap: float = 1000.0)
     )
 
     fig.update_layout(
-        title="Minimum Nights vs. Nightly Price (Stay Duration Friction)",
+        title=f"Minimum stay vs. nightly price (display cap ${price_cap:,.0f})",
         height=380,
     )
     return apply_plotly_theme(fig)
@@ -450,6 +402,8 @@ def build_reviews_vs_price_chart(df: pd.DataFrame, price_cap: float = 1000.0) ->
         return empty_figure()
 
     filtered = df[df["price"] <= price_cap]
+    if filtered.empty:
+        return empty_figure("No listings fall within the selected price display cap.")
     if len(filtered) > 5000:
         filtered = filtered.sample(5000, random_state=42)
 
@@ -469,7 +423,7 @@ def build_reviews_vs_price_chart(df: pd.DataFrame, price_cap: float = 1000.0) ->
     )
 
     fig.update_layout(
-        title="Reviews per Month vs. Nightly Price",
+        title=f"Review activity vs. nightly price (display cap ${price_cap:,.0f})",
         height=380,
     )
     return apply_plotly_theme(fig)

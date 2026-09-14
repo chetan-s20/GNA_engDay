@@ -103,7 +103,7 @@ def test_host_category_boundaries():
     assert assign_host_category(5) == "Small portfolio"
     assert assign_host_category(6) == "Professional host"
     assert assign_host_category(100) == "Professional host"
-    assert assign_host_category(np.nan) == "Single-listing host"
+    assert assign_host_category(np.nan) == "Unknown"
 
 
 def test_price_tiers_assigned(sample_valid_df):
@@ -121,3 +121,37 @@ def test_empty_filter_result(sample_valid_df):
     empty = filter_data(clean, selected_boroughs=["NonExistentBorough"])
     assert empty.empty
     assert isinstance(empty, pd.DataFrame)
+
+
+def test_empty_filter_selections_return_no_rows(sample_valid_df):
+    """An explicit empty multiselect must not be interpreted as selecting all values."""
+    clean = prepare_data(sample_valid_df)
+    assert filter_data(clean, selected_boroughs=[]).empty
+    assert filter_data(clean, selected_room_types=[]).empty
+
+
+def test_missing_and_blank_categories_are_removed(sample_valid_df):
+    """Missing categorical values must remain null through normalization and be removed."""
+    categorical_null = sample_valid_df.iloc[[0]].copy()
+    categorical_null["id"] = 99
+    categorical_null["neighbourhood_group"] = None
+    categorical_null["latitude"] = 40.75
+
+    blank_room = sample_valid_df.iloc[[0]].copy()
+    blank_room["id"] = 100
+    blank_room["room_type"] = "   "
+
+    clean = prepare_data(pd.concat([sample_valid_df, categorical_null, blank_room], ignore_index=True))
+    assert 99 not in clean["id"].values
+    assert 100 not in clean["id"].values
+
+
+def test_outlier_and_review_activity_fields(sample_valid_df):
+    """Required derived fields should use stable, documented categories."""
+    expensive = sample_valid_df.iloc[[0]].copy()
+    expensive["id"] = 101
+    expensive["price"] = 1500
+    clean = prepare_data(pd.concat([sample_valid_df, expensive], ignore_index=True))
+
+    assert clean.loc[clean["id"] == 101, "is_price_outlier"].item()
+    assert set(clean["review_activity"].unique()).issubset({"Low", "Moderate", "High"})

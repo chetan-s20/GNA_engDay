@@ -41,3 +41,19 @@ def test_insights_on_empty_df():
     res = generate_overview_insights(empty_df)
     assert len(res) == 1
     assert "No listings match" in res[0]
+
+
+def test_price_insights_respect_display_cap():
+    """Narrative medians should match the capped records shown in adjacent charts."""
+    frame = pd.DataFrame(
+        {
+            "room_type": ["Entire home/apt", "Entire home/apt", "Private room"],
+            "price": [200, 5000, 100],
+            "minimum_nights": [2, 2, 2],
+            "price_tier": ["Premium", "Luxury", "Budget"],
+        }
+    )
+    insights = generate_price_insights(frame, price_cap=1000)
+    combined = " ".join(insights)
+    assert "$200" in combined
+    assert "$5,000" not in combined

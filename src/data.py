@@ -53,12 +53,13 @@ def assign_host_category(count: int | float) -> str:
     2-5: Small portfolio
     6+: Professional host
     """
-    if pd.isna(count) or count <= 1:
+    if pd.isna(count) or count < 1:
+        return "Unknown"
+    if count == 1:
         return "Single-listing host"
-    elif 2 <= count <= 5:
+    if 2 <= count <= 5:
         return "Small portfolio"
-    else:
-        return "Professional host"
+    return "Professional host"
 
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -66,10 +67,11 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     validate_columns(df)
     clean_df = df.copy()
 
-    # 1. Normalize text fields & whitespace
+    # 1. Normalize text fields while preserving missing values.
     for col in ["neighbourhood_group", "neighbourhood", "room_type"]:
         if col in clean_df.columns:
-            clean_df[col] = clean_df[col].astype(str).str.strip()
+            clean_df[col] = clean_df[col].astype("string").str.strip()
+            clean_df[col] = clean_df[col].replace("", pd.NA)
 
     # 2. Convert numeric fields safely
     for col in NUMERIC_COLUMNS:
@@ -120,36 +122,45 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     # 10. Derived field: has_reviews
     clean_df["has_reviews"] = clean_df["number_of_reviews"] > 0
 
-    # 11. Derived field: review_activity (Low / Moderate / High based on non-null reviews_per_month)
+    # 11. Derived field: review_activity based on positive monthly-review quartiles.
     valid_rpm = clean_df.loc[clean_df["reviews_per_month"] > 0, "reviews_per_month"]
-    if len(valid_rpm) >= 3:
-        rpm_t1 = valid_rpm.quantile(0.333)
-        rpm_t2 = valid_rpm.quantile(0.667)
+    if len(valid_rpm) >= 4:
+        rpm_q1 = valid_rpm.quantile(0.25)
+        rpm_q3 = valid_rpm.quantile(0.75)
 
         def get_activity(r):
             if pd.isna(r) or r == 0:
-                return "None / Inactive"
-            elif r <= rpm_t1:
                 return "Low"
-            elif r <= rpm_t2:
+            if r <= rpm_q1:
+                return "Low"
+            if r <= rpm_q3:
                 return "Moderate"
-            else:
-                return "High"
+            return "High"
 
         clean_df["review_activity"] = clean_df["reviews_per_month_filled"].apply(get_activity)
     else:
-        clean_df["review_activity"] = "Moderate"
+        clean_df["review_activity"] = np.where(
+            clean_df["reviews_per_month_filled"] > 0, "High", "Low"
+        )
+
+    # A stable baseline flag; interactive charts calculate their own selected cap.
+    clean_df["is_price_outlier"] = clean_df["price"] > 1000
 
     return clean_df
+
+
+@st.cache_data(show_spinner=False)
+def load_source_data(filepath: str = "data/AB_NYC_2019.csv") -> pd.DataFrame:
+    """Load the source CSV once so the app can report transparent quality metrics."""
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"Source file not found at: {filepath}")
+    return pd.read_csv(filepath)
 
 
 @st.cache_data(show_spinner="Loading and preparing NYC Airbnb dataset...")
 def load_and_prepare_data(filepath: str = "data/AB_NYC_2019.csv") -> pd.DataFrame:
     """Load source CSV and execute preparation pipeline with Streamlit caching."""
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"Source file not found at: {filepath}")
-    raw_df = pd.read_csv(filepath)
-    return prepare_data(raw_df)
+    return prepare_data(load_source_data(filepath))
 
 
 def filter_data(
@@ -164,10 +175,10 @@ def filter_data(
     """Apply interactive sidebar filters across the cleaned dataset."""
     filtered = df.copy()
 
-    if selected_boroughs:
+    if selected_boroughs is not None:
         filtered = filtered[filtered["neighbourhood_group"].isin(selected_boroughs)]
 
-    if selected_room_types:
+    if selected_room_types is not None:
         filtered = filtered[filtered["room_type"].isin(selected_room_types)]
 
     filtered = filtered[

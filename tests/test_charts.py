@@ -70,3 +70,28 @@ def test_all_chart_builders_render_without_error(real_data):
     neigh_df = compute_neighborhood_aggregates(sample_slice, min_listings=1)
     fig12 = build_neighborhood_ranked_chart(neigh_df, ranking_type="Top 10")
     assert fig12 is not None
+
+
+def test_map_modes_expose_consistent_neighborhood_metrics(real_data):
+    """Price and review maps should expose the same complete neighborhood context."""
+    sample_slice = real_data.sample(1000, random_state=7)
+    for metric in ["Listing Density", "Median Price", "Review Activity"]:
+        fig = build_market_map(sample_slice, metric=metric, price_cap=1000.0)
+        hover_template = " ".join(
+            str(trace.hovertemplate) for trace in fig.data if trace.hovertemplate
+        )
+        assert "Listings" in hover_template
+        assert "Median price" in hover_template
+        assert "Median reviews/mo" in hover_template
+
+
+def test_capped_scatter_charts_explain_empty_state(real_data):
+    """Price-cap charts should return a readable empty figure rather than a blank plot."""
+    expensive_only = real_data[real_data["price"] > 1000].copy()
+    for figure in [
+        build_price_by_borough_room_chart(expensive_only, price_cap=1000),
+        build_min_nights_vs_price_chart(expensive_only, price_cap=1000),
+        build_reviews_vs_price_chart(expensive_only, price_cap=1000),
+    ]:
+        assert figure.layout.annotations
+        assert "No listings" in figure.layout.annotations[0].text

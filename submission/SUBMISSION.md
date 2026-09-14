@@ -28,7 +28,8 @@ Do not select Superstore. This repository analyzes the NYC Airbnb dataset.
 - **Question Visualization Script:** `question_visualizations.py`
 - **Interactive Dashboard Script:** `app.py`
 - **Full project archive:** upload a ZIP of the repository if the portal permits it
-- **GitHub / Live Link:** add the deployed Streamlit URL or public GitHub repository URL before submission
+- **Live Streamlit Dashboard:** https://nyc-airbnb-market-intelligence.streamlit.app/
+- **Public GitHub Repository:** https://github.com/chetan-s20/GNA_engDay
 
 The primary image is a 16:9, high-resolution artifact created with both Matplotlib and Seaborn. The interactive dashboard uses Plotly.
 

@@ -7,6 +7,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.39+-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Plotly](https://img.shields.io/badge/Plotly-5.24+-3F4F75?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
 [![Tests](https://img.shields.io/badge/Tests-pytest-10B981?style=flat)](tests/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://nyc-airbnb-market-intelligence.streamlit.app/)
 
 ---
 
@@ -49,6 +50,7 @@ Open your browser at `http://localhost:8501`.
 
 ## Panel Submission Package
 
+- Live dashboard: https://nyc-airbnb-market-intelligence.streamlit.app/
 - Primary 2400x1350 visualization: [`submission/nyc_airbnb_market_intelligence.png`](submission/nyc_airbnb_market_intelligence.png)
 - Three form-ready question images: [`submission/`](submission/)
 - Reproducible Matplotlib + Seaborn generator: [`submission_visualization.py`](submission_visualization.py)
